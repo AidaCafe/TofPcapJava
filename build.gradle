@@ -1,0 +1,53 @@
+plugins {
+    id 'java-library'
+    id 'application'
+}
+
+group = 'net.cassite'
+version = '0.0.1'
+
+repositories {
+    mavenLocal()
+    mavenCentral()
+}
+
+dependencies {
+    api 'io.vproxy:commons:1.1.2'
+    api 'org.pcap4j:pcap4j-core:1.+'
+    api 'org.pcap4j:pcap4j-packetfactory-static:1.+'
+    api 'org.slf4j:slf4j-api:<=1.7.26'
+}
+
+application {
+    mainClassName = 'net.cassite.tofpcap.sample.SampleMain'
+}
+
+tasks.withType(JavaExec) {
+    enableAssertions = System.getProperty("ea", "false") == "true"
+    var netDebug = System.getProperty("javax.net.debug")
+    if (netDebug != null) {
+        systemProperty("javax.net.debug", netDebug);
+    }
+}
+
+compileJava {
+    doFirst {
+        options.compilerArgs << '--module-path' << classpath.asPath
+    }
+}
+
+sourceCompatibility = 17
+targetCompatibility = 17
+
+java {
+    withSourcesJar()
+    withJavadocJar()
+}
+
+javadoc {
+    exclude '**/*.java'
+}
+
+tasks.withType(GenerateModuleMetadata) {
+    enabled = false
+}
