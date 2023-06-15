@@ -15,9 +15,8 @@ repositories {
 
 dependencies {
     api 'io.vproxy:commons:1.1.2'
-    api 'org.pcap4j:pcap4j-core:1.8.2'
-    api 'org.pcap4j:pcap4j-packetfactory-static:1.8.2'
-    api 'org.slf4j:slf4j-api:<=1.7.26'
+    api 'io.vproxy:pcap4j-core:1.8.3.3'
+    api 'io.vproxy:pcap4j-packetfactory-static:1.8.3.3'
 }
 
 application {
