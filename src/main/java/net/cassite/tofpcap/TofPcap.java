@@ -8,7 +8,6 @@ import io.vproxy.vpacket.AbstractIpPacket;
 import io.vproxy.vpacket.EthernetPacket;
 import io.vproxy.vpacket.PacketDataBuffer;
 import io.vproxy.vpacket.TcpPacket;
-import net.cassite.tofpcap.messages.ChatMessage;
 import net.cassite.tofpcap.parser.BasePacketStructure;
 import net.cassite.tofpcap.parser.ChatPacket;
 import net.cassite.tofpcap.util.TofConsts;
@@ -171,13 +170,17 @@ public class TofPcap {
         }
     }
 
-    private void alertMessage(MessageType type, ChatMessage msg) {
+    protected void alertMessage(MessageType type, Message msg) {
         var ls = listeners.get(type);
         if (ls == null) {
             return;
         }
         for (var lsn : ls) {
-            lsn.onMessage(new MessageEvent(type, msg));
+            try {
+                lsn.onMessage(new MessageEvent(type, msg));
+            } catch (Throwable t) {
+                Logger.error(LogType.IMPROPER_USE, "error occurred when emitting the message: " + type + ", " + msg, t);
+            }
         }
     }
 
