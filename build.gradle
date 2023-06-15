@@ -1,6 +1,8 @@
 plugins {
     id 'java-library'
     id 'application'
+    id 'maven-publish'
+    id 'signing'
 }
 
 group = 'net.cassite'
@@ -13,8 +15,8 @@ repositories {
 
 dependencies {
     api 'io.vproxy:commons:1.1.2'
-    api 'org.pcap4j:pcap4j-core:1.+'
-    api 'org.pcap4j:pcap4j-packetfactory-static:1.+'
+    api 'org.pcap4j:pcap4j-core:1.8.2'
+    api 'org.pcap4j:pcap4j-packetfactory-static:1.8.2'
     api 'org.slf4j:slf4j-api:<=1.7.26'
 }
 
@@ -50,4 +52,54 @@ javadoc {
 
 tasks.withType(GenerateModuleMetadata) {
     enabled = false
+}
+
+publishing {
+    publications {
+        maven(MavenPublication) {
+            from components.java
+            artifactId 'tof-pcap-java'
+
+            pom {
+                name = 'tof-pcap-java'
+                description = 'packet capture of Tower of Fantasy'
+                url = 'http://github.com/wkgcass/TofPcapJava'
+                licenses {
+                    license {
+                        name = 'MIT License'
+                        url = 'https://github.com/wkgcass/TofPcapJava/blob/master/LICENSE'
+                    }
+                }
+                developers {
+                    developer {
+                        id = 'wkgcass'
+                        name = 'K.G. Wang'
+                        email = 'wkgcass@hotmail.com'
+                    }
+                }
+                scm {
+                    connection = 'scm:git:git://github.com/wkgcass/TofPcapJava.git'
+                    developerConnection = 'scm:git:git://github.com/wkgcass/TofPcapJava.git'
+                    url = 'https://github.com/wkgcass/TofPcapJava'
+                }
+            }
+        }
+    }
+    repositories {
+        maven {
+            credentials {
+                username 'wkgcass'
+                password System.getProperty("MavenPublishPassword")
+            }
+            def releasesRepoUrl = 'https://s01.oss.sonatype.org/service/local/staging/deploy/maven2/'
+            def snapshotsRepoUrl = 'https://s01.oss.sonatype.org/content/repositories/snapshots/'
+            url = version.contains('-DEV') ? snapshotsRepoUrl : releasesRepoUrl
+        }
+    }
+}
+
+signing {
+    if (!System.getProperty("MavenLocalInstall", "false").equals("true")) {
+        sign publishing.publications.maven
+    }
 }
