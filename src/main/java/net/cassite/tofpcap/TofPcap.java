@@ -3,21 +3,20 @@ package net.cassite.tofpcap;
 import io.vproxy.base.util.ByteArray;
 import io.vproxy.base.util.LogType;
 import io.vproxy.base.util.Logger;
-import io.vproxy.base.util.coll.Tuple;
 import io.vproxy.vfd.IP;
 import io.vproxy.vpacket.AbstractIpPacket;
 import io.vproxy.vpacket.EthernetPacket;
 import io.vproxy.vpacket.PacketDataBuffer;
 import io.vproxy.vpacket.TcpPacket;
 import net.cassite.tofpcap.messages.ChatMessage;
-import net.cassite.tofpcap.util.Utils;
+import net.cassite.tofpcap.parser.BasePacketStructure;
+import net.cassite.tofpcap.parser.ChatPacket;
 import net.cassite.tofpcap.util.TofConsts;
 import org.pcap4j.core.BpfProgram;
 import org.pcap4j.core.PcapHandle;
 import org.pcap4j.core.PcapNetworkInterface;
 import org.pcap4j.packet.Packet;
 
-import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -145,105 +144,20 @@ public class TofPcap {
             return;
         }
 
-        var parseTup = parsePacketType(data, 0);
+        var basePacket = new BasePacketStructure();
+        basePacket.from(data);
 
-        if (parseTup._1 == TofConsts.PACKET_TYPE_CHAT) {
-            handleChat(data, parseTup._2);
+        if (basePacket.getType() == TofConsts.PACKET_TYPE_CHAT) {
+            handleChat(data.sub(basePacket.getOffsetAfterType(), data.length() - basePacket.getOffsetAfterType()));
         } else {
-            assert Logger.lowLevelDebug("unknown packet type " + parseTup._1);
+            assert Logger.lowLevelDebug("unknown packet type " + basePacket.getType());
         }
     }
 
-    // return <type, new-off>
-    public static Tuple<Integer, Integer> parsePacketType(ByteArray data, int off) {
-        assert Logger.lowLevelDebug("parsePacketType off=" + off + ", data=" + data.toHexString());
-        int _len = data.int32ReverseNetworkByteOrder(off);
-        off += 4;
-
-        if (_len != data.length() - 4) {
-            throw new RuntimeException("invalid packet");
-        }
-
-        int _off = data.int32ReverseNetworkByteOrder(off);
-        off += 4;
-        off += _off;
-        off += 4;
-
-        off += 4;
-        _off = data.int32ReverseNetworkByteOrder(off);
-        off += 4;
-        off += _off;
-        off += 4;
-
-        int flag = data.int32ReverseNetworkByteOrder(off);
-        off += 4;
-
-        return new Tuple<>(flag, off);
-    }
-
-    public static Tuple<ChatMessage, Integer> parseChatMessage(ByteArray data, int off) {
-        assert Logger.lowLevelDebug("parseChatMessage off=" + off + ", data=" + data.toHexString());
-        int endOff = Utils.findLen4Hex32(data, off);
-        if (endOff == -1) {
-            throw new IllegalArgumentException("invalid packet, cannot find first Len4Hex32");
-        }
-        off = endOff - 36;
-        off = Utils.findLastLen4Data(data, off);
-        if (off == -1) {
-            throw new IllegalArgumentException("invalid packet, cannot find message");
-        }
-        var tup = Utils.readLen4Data(data, off);
-        var message = tup._1.toString();
-        while (message.isEmpty()) {
-            off = Utils.findLastLen4Data(data, off);
-            if (off == -1) {
-                break;
-            }
-            tup = Utils.readLen4Data(data, off);
-            message = tup._1.toString();
-        }
-
-        off = Utils.findLastLen4Data(data, off);
-        if (off != -1 && message.isEmpty()) {
-            tup = Utils.readLen4Data(data, off);
-            message = tup._1.toString();
-        }
-
-        int nextOff = Utils.findLen4Hex32(data, endOff);
-        if (nextOff == -1) {
-            throw new IllegalArgumentException("invalid packet, cannot find second Len4Hex32");
-        }
-        off = nextOff + 4;
-
-        var strings = new ArrayList<String>();
-
-        while (off < data.length() - 1) {
-            tup = Utils.readLen4Data(data, off);
-            var str = tup._1.toString();
-            off += tup._2;
-
-            if (str.isBlank()) {
-                continue;
-            }
-            strings.add(str);
-        }
-
-        var avatarFrame = strings.get(0);
-        var avatar = strings.get(1);
-        var chatBubble = strings.get(strings.size() - 3);
-        var title = strings.get(strings.size() - 2);
-        var nickname = strings.get(strings.size() - 1);
-
-        var msg = new ChatMessage(
-            message,
-            avatarFrame, avatar,
-            chatBubble, title, nickname);
-        return new Tuple<>(msg, off);
-    }
-
-    private void handleChat(ByteArray data, int off) {
-        var parseTup = parseChatMessage(data, off);
-        alertMessage(MessageType.CHAT, parseTup._1);
+    private void handleChat(ByteArray data) {
+        var chatPacket = new ChatPacket();
+        chatPacket.from(data);
+        alertMessage(MessageType.CHAT, chatPacket.buildMessage());
     }
 
     public void stop() {
