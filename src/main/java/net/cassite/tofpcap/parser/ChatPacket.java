@@ -11,6 +11,7 @@ public class ChatPacket {
     private int firstLen4Hex32EndingOffset;
     private int secondLen4Hex32EndingOffset;
 
+    private int channel;
     private String message;
     private String avatarFrame;
     private String avatar;
@@ -24,6 +25,10 @@ public class ChatPacket {
 
     public int getSecondLen4Hex32EndingOffset() {
         return secondLen4Hex32EndingOffset;
+    }
+
+    public int getChannel() {
+        return channel;
     }
 
     public String getMessage() {
@@ -53,6 +58,19 @@ public class ChatPacket {
     public void from(ByteArray data) {
         assert Logger.lowLevelDebug("ChatPacket.from: data=" + data.toHexString());
         int off = 0;
+
+        off += 4;
+        int _len = data.int32ReverseNetworkByteOrder(off);
+        off += 4;
+        off += _len;
+
+        // maybe chatId
+        off += 4;
+
+        off += 16;
+
+        channel = data.int32ReverseNetworkByteOrder(off);
+        off += 4;
 
         firstLen4Hex32EndingOffset = Utils.findLen4Hex32(data, off);
         if (firstLen4Hex32EndingOffset == -1) {
@@ -102,7 +120,7 @@ public class ChatPacket {
 
     public ChatMessage buildMessage() {
         return new ChatMessage(
-            getMessage(),
+            getChannel(), getMessage(),
             getAvatarFrame(), getAvatar(),
             getChatBubble(), getTitle(), getNickName());
     }
