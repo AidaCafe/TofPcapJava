@@ -20,4 +20,14 @@ public enum ChatChannel {
         if (channel == COOP.num) return COOP;
         return null;
     }
+
+    public static ChatChannel valueOf0(String s) {
+        return switch (s) {
+            case "WORLD", "world" -> WORLD;
+            case "TEAM", "team" -> TEAM;
+            case "GUILD", "guild" -> GUILD;
+            case "COOP", "coop" -> COOP;
+            default -> throw new IllegalArgumentException("unknown string for ChatChannel: " + s);
+        };
+    }
 }
