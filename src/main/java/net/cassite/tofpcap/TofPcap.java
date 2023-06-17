@@ -13,6 +13,7 @@ import net.cassite.tofpcap.parser.ChatPacket;
 import net.cassite.tofpcap.util.TofConsts;
 import org.pcap4j.core.BpfProgram;
 import org.pcap4j.core.PcapHandle;
+import org.pcap4j.core.PcapNativeException;
 import org.pcap4j.core.PcapNetworkInterface;
 import org.pcap4j.packet.Packet;
 
@@ -89,6 +90,14 @@ public class TofPcap {
                 packet = pcapHandle.getNextPacketEx();
             } catch (TimeoutException ignore) {
                 continue;
+            } catch (PcapNativeException e) {
+                Logger.error(LogType.ALERT, "Got PcapNativeException, need to restart!", e);
+                if (restart()) {
+                    continue;
+                } else {
+                    running = false;
+                    break;
+                }
             } catch (Throwable t) {
                 Logger.error(LogType.ALERT, "failed to retrieve next packet", t);
                 continue;
@@ -99,6 +108,17 @@ public class TofPcap {
                 Logger.error(LogType.ALERT, "failed to handle packet", t);
             }
         }
+    }
+
+    private boolean restart() {
+        destroy();
+        try {
+            prepare();
+        } catch (Exception e) {
+            Logger.fatal(LogType.ALERT, "failed to prepare in restart, the packet capturing cannot proceed!", e);
+            return false;
+        }
+        return true;
     }
 
     private void handlePacket(byte[] rawData) throws Exception {
