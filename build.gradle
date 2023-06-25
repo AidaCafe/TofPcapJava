@@ -65,11 +65,11 @@ publishing {
             pom {
                 name = 'tof-pcap-java'
                 description = 'packet capture of Tower of Fantasy'
-                url = 'http://github.com/wkgcass/TofPcapJava'
+                url = 'http://github.com/AidaCafe/TofPcapJava'
                 licenses {
                     license {
-                        name = 'MIT License'
-                        url = 'https://github.com/wkgcass/TofPcapJava/blob/master/LICENSE'
+                        name = 'GPLv2'
+                        url = 'https://github.com/AidaCafe/TofPcapJava/blob/master/LICENSE'
                     }
                 }
                 developers {
@@ -80,9 +80,9 @@ publishing {
                     }
                 }
                 scm {
-                    connection = 'scm:git:git://github.com/wkgcass/TofPcapJava.git'
-                    developerConnection = 'scm:git:git://github.com/wkgcass/TofPcapJava.git'
-                    url = 'https://github.com/wkgcass/TofPcapJava'
+                    connection = 'scm:git:git://github.com/AidaCafe/TofPcapJava.git'
+                    developerConnection = 'scm:git:git://github.com/AidaCafe/TofPcapJava.git'
+                    url = 'https://github.com/AidaCafe/TofPcapJava'
                 }
             }
         }
@@ -93,8 +93,8 @@ publishing {
                 username 'wkgcass'
                 password System.getProperty("MavenPublishPassword")
             }
-            def releasesRepoUrl = 'https://s01.oss.sonatype.org/service/local/staging/deploy/maven2/'
-            def snapshotsRepoUrl = 'https://s01.oss.sonatype.org/content/repositories/snapshots/'
+            def releasesRepoUrl = 'https://oss.sonatype.org/service/local/staging/deploy/maven2/'
+            def snapshotsRepoUrl = 'https://oss.sonatype.org/content/repositories/snapshots/'
             url = version.contains('-DEV') ? snapshotsRepoUrl : releasesRepoUrl
         }
     }
